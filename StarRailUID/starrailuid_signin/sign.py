@@ -95,7 +95,6 @@ async def sign_in(sr_uid: str) -> str:
     if isinstance(sign_list, int) or isinstance(new_sign_info, int):
         logger.warning(f'[SR签到] {sr_uid} 出错, 请检查Cookies是否过期!')
         return 'sr签到失败...请检查Cookies是否过期!'
-    # 获取签到奖励物品,拿旧的总签到天数 + 1 为新的签到天数,再 -1 即为今日奖励物品的下标
     getitem = sign_list.awards[int(sign_info.total_sign_day) + 1 - 1]
     get_im = f'本次sr签到获得{getitem.name}x{getitem.cnt}'
     day_of_month = int(new_sign_info.today.split('-')[-1])
