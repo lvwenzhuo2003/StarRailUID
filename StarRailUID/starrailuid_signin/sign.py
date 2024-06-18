@@ -4,6 +4,7 @@ from copy import deepcopy
 
 from gsuid_core.gss import gss
 from gsuid_core.logger import logger
+from gsuid_core.utils.api.mys import resolve_captcha
 from gsuid_core.utils.database.models import GsUser
 from gsuid_core.utils.plugins_config.gs_config import core_plugins_config
 
@@ -32,7 +33,8 @@ async def sign_in(sr_uid: str) -> str:
         day_of_month = int(sign_info.today.split('-')[-1])
         signed_count = int(sign_info.total_sign_day)
         sign_missed = day_of_month - signed_count
-        return f'今日已签到!本月漏签次数:{sign_missed}'
+        credit_balance = await resolve_captcha.get_balance(core_plugins_config.get_config('_pass_API_secret').data)
+        return f'今日已签到!本月漏签次数:{sign_missed}\n当前验证码系统余额: US${credit_balance}'
 
     # 实际进行签到
     Header = {}
@@ -49,7 +51,20 @@ async def sign_in(sr_uid: str) -> str:
                 if core_plugins_config.get_config('CaptchaPass').data:
                     gt = sign_data.gt
                     ch = sign_data.challenge
-                    vl, ch = await mys_api._pass(gt, ch, Header)  # noqa: SLF001
+                    result = {}
+                    try:
+                        result = await mys_api._pass(gt, ch, Header)
+                        vl = result['solution']["validate"]
+                        ch = result['solution']["challenge"]
+                        seccode = f'{vl}|jordan'
+                    except ConnectionError:
+                        logger.info(
+                            '已开启无感验证，但是验证码绕过失败，稍后由用户手动重试'
+                        )
+                        return '签到失败(255)..验证码绕过失败，请稍后重试！原因：UNKNOWN_ERROR: Unknown error occurred while resolving the captcha.'
+                    except KeyError:
+                        logger.info(f'已开启无感验证，但是验证码绕过失败，原因：{result["errorCode"]}')
+                        return f'签到失败({result["errorId"]})..验证码绕过失败，请稍后重试！\n原因：{result["errorCode"]}: {result["errorDescription"]}'
                     if vl:
                         delay = 1
                         Header['x-rpc-challenge'] = ch
@@ -106,7 +121,8 @@ async def sign_in(sr_uid: str) -> str:
         mes_im = 'sr签到失败...'
         sign_missed -= 1
     sign_missed = sign_info.sign_cnt_missed or sign_missed
-    im = f'{mes_im}!\n{get_im}\n本月漏签次数:{sign_missed}'
+    credit_balance = await resolve_captcha.get_balance(core_plugins_config.get_config('_pass_API_secret').data)
+    im = f'{mes_im}!\n{get_im}\n本月漏签次数: {sign_missed}\n当前验证码系统余额: US${credit_balance}'
     logger.info(
         f'[SR签到] {sr_uid} 签到完成, 结果: {mes_im}, 漏签次数: {sign_missed}'
     )
