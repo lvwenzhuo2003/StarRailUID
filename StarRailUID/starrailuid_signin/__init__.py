@@ -25,7 +25,7 @@ async def get_sign_func(bot: Bot, ev: Event):
     if uid is None:
         return await bot.send(UID_HINT)
     logger.info(f'[星穹铁道] [签到] UID: {uid}')
-    await bot.send(await sign_in(uid, 'sr'))
+    await bot.send(await sign_in(uid=uid, game_name='sr', bot=bot))
 
 
 @sv_sign_config.on_fullmatch(f'{PREFIX}全部重签')
