@@ -1,4 +1,6 @@
-from typing import Dict, List, Union
+from typing import List, Union
+
+from msgspec import Struct, convert
 
 from .read_excel import (
     AvatarPromotion,
@@ -6,8 +8,6 @@ from .read_excel import (
     RelicMainAffix,
     RelicSubAffix,
 )
-
-from msgspec import Struct, convert
 
 
 class PromotionCost(Struct):
@@ -71,25 +71,7 @@ class SingleRelicSubAffix(Struct):
     StepNum: int
 
 
-# class AvatarPromotionConfigModel(Struct):
-#     Avatar: List[Dict[str, SingleAvatarPromotion]]
-
-
-# class EquipmentPromotionConfigModel(Struct):
-#     Equipment: List[Dict[str, SingleEquipmentPromotion]]
-
-
-# class RelicMainAffixConfigModel(Struct):
-#     Relic: List[Dict[str, SingleRelicMainAffix]]
-
-
-# class RelicSubAffixConfigModel(Struct):
-#     Relic: Dict[str, Dict[str, SingleRelicSubAffix]]
-
-
 AvatarPromotionConfig = convert(AvatarPromotion, List[SingleAvatarPromotion])
-EquipmentPromotionConfig = convert(
-    EquipmentPromotion, List[SingleEquipmentPromotion]
-)
+EquipmentPromotionConfig = convert(EquipmentPromotion, List[SingleEquipmentPromotion])
 RelicMainAffixConfig = convert(RelicMainAffix, List[SingleRelicMainAffix])
 RelicSubAffixConfig = convert(RelicSubAffix, List[SingleRelicSubAffix])
